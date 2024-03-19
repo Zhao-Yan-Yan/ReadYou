@@ -103,8 +103,8 @@ private class ReaderNestedScrollConnection(
 @ExperimentalMaterialApi
 fun rememberPullToLoadState(
     key: Any?,
-    onLoadPrevious: () -> Unit,
-    onLoadNext: () -> Unit,
+    onLoadPrevious: () -> Boolean,
+    onLoadNext: () -> Boolean,
     loadThreshold: Dp = PullToLoadDefaults.LoadThreshold,
 ): PullToLoadState {
     require(loadThreshold > 0.dp) { "The load trigger must be greater than zero!" }
@@ -147,8 +147,8 @@ fun rememberPullToLoadState(
  */
 class PullToLoadState internal constructor(
     private val animationScope: CoroutineScope,
-    private val onLoadPrevious: State<() -> Unit>,
-    private val onLoadNext: State<() -> Unit>,
+    private val onLoadPrevious: State<() -> Boolean>,
+    private val onLoadNext: State<() -> Boolean>,
     threshold: Float
 ) {
     /**
@@ -222,11 +222,15 @@ class PullToLoadState internal constructor(
             // We don't change the pull offset here because the animation for loading another content
             // should be handled outside, and this state will be soon disposed
             Status.PulledDown -> {
-                onLoadPrevious.value()
+                if (!onLoadPrevious.value()) {
+                    animateDistanceTo(0f)
+                }
             }
 
             Status.PulledUp -> {
-                onLoadNext.value()
+                if (!onLoadNext.value()) {
+                    animateDistanceTo(0f)
+                }
             }
 
             else -> {
